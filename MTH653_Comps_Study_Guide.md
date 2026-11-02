@@ -40,6 +40,8 @@ Spring 2025, Portland State University (W. Pazner). Sources: lecture notes 1-10 
   $$\|u-\Pi_hu\|_{H^m(\kappa)}\lesssim h^{p+1-m}|u|_{H^{p+1}(\kappa)},\quad \|u-\Pi_hu\|_{L^\infty(\kappa)}\lesssim h^{p+1}|u|_{W^{p+1}_\infty(\kappa)},\quad \|u-\Pi_hu\|_{L^2(\partial\kappa)}\lesssim h^{p+1/2}|u|_{H^{p+1}(\kappa)}$$
 - **Young's inequality with weight**: $ab\le\tfrac12(\epsilon a^2+b^2/\epsilon)$.
 ## 1. Advection and the finite volume method (L1)
+> **Takeaway (L1):** Advection is hyperbolic: information flows along characteristics, so the discretization must respect direction. Standard continuous FEM (and central differences) ignore this and oscillate or lose an order. Finite volume fixes it by storing cell averages and using the **upwind** value at each interface.
+
 ### Model problems
 - Time-dependent advection with prescribed velocity $\beta:\Omega\to\mathbb R^d$:
   $$u_t+\nabla\cdot(\beta u)=0,\quad u(x,0)=u_0,\quad u=g\text{ on }\Gamma_{in}$$
@@ -49,6 +51,8 @@ Spring 2025, Portland State University (W. Pazner). Sources: lecture notes 1-10 
 - The equation is **hyperbolic** (unlike elliptic Poisson/elasticity/Stokes or parabolic heat). Information travels along characteristics (direction $\beta$).
 - Time-dependent and steady problems are interchangeable: backward Euler on $u_t+\nabla\cdot(\beta u)=0$ gives $\Delta t\,\nabla\cdot(\beta u^{n+1})+u^{n+1}=u^n$, which has the form of the steady problem with $c=1$. In practice explicit time stepping is more common for the time-dependent problem.
 ### $H^1$-conforming discretization
+> **Takeaway:** Continuous FEM for advection is only coercive in a weak norm (no gradient control), so you get $O(h)$ in $L^2$ (one order suboptimal) and wiggles. This is the motivation for something better.
+
 - Strong BC: $V=\{v\in H^1:v=0\text{ on }\Gamma_{in}\}$ (for $g=0$). Find $u\in V$: $\int\nabla\cdot(\beta u)v+\int cuv=\int fv$ for all $v\in V$.
 - Weak BC: $u,v\in H^1(\Omega)$ and
   $$a(u,v)=\int_\Omega\nabla\cdot(\beta u)v\,dx-\int_{\Gamma_{in}}uv\,\beta\cdot n\,ds+\int_\Omega cuv\,dx,\qquad F(v)=-\int_{\Gamma_{in}}gv\,\beta\cdot n\,ds+\int_\Omega fv\,dx$$
@@ -62,6 +66,8 @@ Spring 2025, Portland State University (W. Pazner). Sources: lecture notes 1-10 
 - So the $L^2$ error is $O(h)$: **suboptimal by one order** (interpolation gives $h^2$). If $u\in H^1\setminus H^2$ the method does not converge in $H^1$.
 - **Numerical symptom: spurious oscillations.** $\beta=1$, $u_0=e^{-150(x-1/2)^2}$, periodic, RK4 to $T=3$: the shape is roughly right but there are wiggles. Motivates FV, then DG.
 ### Finite volume (FV) method
+> **Takeaway:** Unknown = cell average; the cell balance law needs interface values, which you approximate by the upwind neighbor. In 1D this is just the backward difference: first-order, stable only when the CFL/stability-region condition holds.
+
 - Unknowns: cell averages $u_i=\frac1{|\kappa_i|}\int_{\kappa_i}u\,dx$, $h_i=|\kappa_i|$ (compare: FE stores vertex values).
 - Integrate the PDE over a cell and use the divergence theorem:
   $$h_i\frac{du_i}{dt}+\int_{\partial\kappa_i}u\,\beta\cdot n\,ds=0\qquad(n\text{ outward normal of }\kappa_i)$$
@@ -87,6 +93,8 @@ i.e. $\lambda\Delta t$ lies in the disk of radius 1 centered at $-1$ in $\mathbb
 ### Homework 1 Q1: consistency of DG (see also [[#2. DG method for advection (L2)]])
 - Result: the DG variational formulation is consistent iff the numerical flux $\widehat F$ is consistent ($\widehat F(u,u,n)=u\beta$). Proof is by integrating by parts back element-wise (periodic BC, $\Gamma_\partial=\varnothing$).
 ## 2. DG method for advection (L2)
+> **Takeaway (L2):** DG = piecewise polynomials with no continuity, glued together only through a **numerical flux** on edges. The flux must be consistent (correct for smooth $u$) and conservative (single-valued). Upwinding adds jump control to the stability norm and gives $h^{p+1/2}$; the central flux only gives $h^p$.
+
 ### Derivation of the formulation
 - Test with $v\in H^1(\mathcal T)$, integrate over each $\kappa$, integrate by parts:
   $$-\int_\kappa u\beta\cdot\nabla v\,dx+\int_{\partial\kappa}uv\,\beta\cdot n\,ds+\int_\kappa cuv\,dx=\int_\kappa fv\,dx$$
@@ -123,6 +131,8 @@ i.e. $\lambda\Delta t$ lies in the disk of radius 1 centered at $-1$ in $\mathbb
   - Face terms: with $b_0$ bounded below, the jump term $[\![\xi]\!]$ is controlled by the DG norm, giving $h^{p+1/2}$. With $b_0=0$ no control of jumps, so use the inverse/trace inequality and lose half an order ($h^p$).
 - Takeaway: **upwinding gives extra jump control and an extra $h^{1/2}$**; central flux is stable in $L^2$ only and has suboptimal rate.
 ## 3. Hyperbolic conservation laws (L3)
+> **Takeaway (L3):** Nonlinear conservation laws develop shocks in finite time even from smooth data, so we need weak solutions. Weak solutions are not unique; Rankine-Hugoniot gives the shock speed and the entropy condition (vanishing viscosity limit) picks the physical one. Riemann problem: $u_L>u_R$ gives a shock, $u_L<u_R$ gives a rarefaction fan.
+
 ### Setup
 - General form (Cauchy problem):
   $$u_t+\nabla\cdot F(u)=0,\quad u(x,0)=u_0(x)$$
@@ -188,6 +198,8 @@ Burgers: $u_L>\sigma>u_R$.
 - The shocks reach the fan edges at $t=2$, so for $T\le1$ the three waves do not interact.
 - Local Lax-Friedrichs (LLF) vs Godunov: LLF is more diffusive (smears shocks), but needs no Riemann solver, only a bound on the max wave speed (cheap and simple). See [[#4. Finite volume for conservation laws and systems (L4)]].
 ## 4. Finite volume for conservation laws and systems (L4)
+> **Takeaway (L4):** FV for conservation laws is "update cell averages by the difference of interface fluxes". The whole game is choosing the interface flux: Godunov uses the exact Riemann solution (accurate, expensive), LLF is cheap but more diffusive. Systems are handled by diagonalizing into scalar advection waves (hyperbolic = real eigenvalues, diagonalizable).
+
 ### FV scheme in 1D
 - Cell averages $u_i(t)$, interface $x_{i+1/2}$. Integrating $u_t+F(u)_x=0$:
   $$h_i\frac{du_i}{dt}+F(u(x_{i+1}))-F(u(x_i))=0$$
@@ -233,6 +245,8 @@ $$\widehat F(u_L,u_R)=\tfrac12\big(F(u_L)+F(u_R)\big)+\tfrac\alpha2(u_L-u_R)$$
 - $\alpha$ is a bound on the max wave speed of the Riemann problem (linear system: $\max|\lambda_i|$; Burgers: $\max\{|u_L|,|u_R|\}$). No Riemann solve needed.
 - In first-order FV, LLF is much more dissipative than Godunov (smears the solution): trades accuracy for simplicity. In DG the effect is greatly reduced, so LLF is an acceptable DG flux.
 ## 5. DG for conservation laws and Godunov's theorem (L5)
+> **Takeaway (L5):** You can avoid exact Riemann solvers with cheap approximate fluxes (LLF = central + numerical diffusion). In DG the flux choice matters far less than in FV, and $p=0$ DG is FV. Godunov's theorem: any linear high-order scheme must create new oscillations, so oscillation control (limiters) must be nonlinear.
+
 ### Approximate (two-wave) Riemann solver
 - Assume two waves of speeds $\sigma_1<\sigma_2$ separating $u_L$, $w^*$, $u_R$. Rankine-Hugoniot on each wave:
   $$F_L-F^*=\sigma_1(u_L-w^*),\qquad F^*-F_R=\sigma_2(w^*-u_R)$$
@@ -268,6 +282,8 @@ It approximates $u_t+F(u)_x=\epsilon u_{xx}$ with $\epsilon=h\alpha/2$: diffusio
   $$\partial_{u_L}\widehat F=\tfrac12\big(F'(u_L)+\alpha\big)\ge0,\qquad \partial_{u_R}\widehat F=\tfrac12\big(F'(u_R)-\alpha\big)\le0$$
 - Coding (skipped): LLF for linear acoustics with $A=\begin{pmatrix}u_0&K_0\\1/\rho_0&u_0\end{pmatrix}$, $u_0=0$, $\rho_0=\tfrac14$, $K=2$, unknowns $(v,p)$, $\Delta t=h/c$, outflow BCs by setting the ghost state to $0$.
 ## 6. DG for elliptic problems (L6)
+> **Takeaway (L6):** Write Poisson as a first-order system, put numerical fluxes on both $u$ and $\sigma=\nabla u$, and eliminate $\sigma$: different flux choices give BR1/BR2/IP/LDG. SIPG = consistency term + symmetry term + penalty $\alpha\sim h^{-1}$. The penalty must be large enough for coercivity; then Cea plus duality give optimal rates ($h^p$ in the DG norm, $h^{p+1}$ in $L^2$).
+
 ### Model problem and flux formulation
 - Goal: DG discretization of $-\epsilon\Delta u$ (advection-diffusion-reaction $\nabla\cdot(\beta u)-\epsilon\Delta u+cu=f$ then combines with the earlier DG terms). Model problem: $-\Delta u=f$ in $\Omega$, $u=0$ on $\partial\Omega$.
 - First-order form: $\sigma=\nabla u$ (flux), $-\nabla\cdot\sigma=f$ (potential $u$). Test with $\tau\in\Sigma_h$ and $v\in V_h$, integrate by parts per element, replace traces by numerical fluxes $\widehat u,\widehat\sigma$:
@@ -288,11 +304,15 @@ It approximates $u_t+F(u)_x=\epsilon u_{xx}$ with $\epsilon=h\alpha/2$: diffusio
   $$\widehat u=\{u\}-\boldsymbol\beta\cdot[\![u]\!],\qquad\widehat\sigma=\{\sigma\}+\boldsymbol\beta[\![\sigma]\!]-\alpha[\![u]\!]$$
 For $|\boldsymbol\beta\cdot n|=\tfrac12$: $\widehat u$ is an "upwind" value (with arbitrary prescribed direction) and $\widehat\sigma$ the "downwind" value plus penalty. Stable for **any $\alpha>0$** (and for special $\boldsymbol\beta$, even $\alpha=0$: "minimal dissipation LDG"). Natural DG discretization of the first-order system.
 ### Symmetric interior penalty (SIPG) bilinear form
+> **Takeaway:** This is the workhorse method. Memorize the four terms and what each one does (volume, consistency, symmetry, penalty).
+
 $$a(u,v)=\int_\Omega\nabla_hu\cdot\nabla_hv\,dx-\int_\Gamma[\![u]\!]\cdot\{\nabla_hv\}\,ds-\int_\Gamma\{\nabla_hu\}\cdot[\![v]\!]\,ds+\int_\Gamma\alpha\,[\![u]\!]\cdot[\![v]\!]\,ds$$
 - Find $u_h\in V_h$ with $a(u_h,v_h)=(f,v_h)$ for all $v_h\in V_h$.
 - Terms: consistency term, symmetry term (adjoint consistency), penalty term (stability). Symmetric, so the matrix is SPD when stable.
 - Properties: **consistent** (exact $u$ satisfies $a(u,v)=(f,v)$ for all $v\in H^1(\mathcal T)$ with suitable regularity), so **Galerkin orthogonality** holds; **adjoint consistent**, enabling optimal $L^2$ error.
 ### Analysis of SIPG
+> **Takeaway:** Everything hinges on trace/inverse inequalities, which turn face terms into volume terms at the cost of $h^{-1/2}$. That bounds the bad cross term (continuity) and forces $\alpha\gtrsim h^{-1}$ (coercivity).
+
 - DG norm:
   $$|||v|||^2:=\|\nabla_hv\|^2_{L^2(\Omega)}+h^{-1}\|[\![v]\!]\|^2_{L^2(\Gamma)}$$
 - Goals: **continuity** $a(u,v)\lesssim|||u|||\,|||v|||$; **coercivity** $a(u,u)\gtrsim|||u|||^2$; accuracy
@@ -320,6 +340,8 @@ Idea: $[\![u]\!]=0$ for the exact solution, so $[\![u_h]\!]=[\![u_h-u]\!]$ and $
 Idea: $\sigma_h=\nabla_hu_h+r([\![u_h]\!])$ (here $\widehat u=\{u\}$ kills the $\ell$ term), then triangle inequality and the lifting bound $\|r([\![u_h]\!])\|\lesssim h^{-1/2}\|[\![u_h]\!]\|\lesssim|||u-u_h|||$.
 - **Trace inequality** (proved in HW3 Q6): $\|u_h\|_{L^2(\partial\kappa)}\lesssim h^{-1/2}\|u_h\|_{L^2(\kappa)}$ for $u_h\in V_h$ (scaling to reference triangle + equivalence of norms on $P_p(\hat\kappa)$).
 ## 7. Preconditioning DG (L7)
+> **Takeaway (L7):** The DG stiffness matrix has condition number $\sim\eta h^{-2}$, which also grows with the penalty. Fix: split DG space into a conforming coarse space plus tiny local (point) spaces. Because $u_h-Q_0u_h$ is controlled by the jumps, this additive preconditioner is robust in both $h$ and $\eta$ and reduces the problem to preconditioning the standard conforming one.
+
 ### Setup
 - IP form with $\alpha=\eta h^{-1}$, $\eta$ bounded below. Matrix $A_{ij}=a(\varphi_i,\varphi_j)$ is SPD. Same DG norm and continuity/coercivity as in L6.
 - **Lemma (Poincare-type, uses duality):** for $u\in H^1(\mathcal T)$,
@@ -348,6 +370,8 @@ Idea: $\sigma_h=\nabla_hu_h+r([\![u_h]\!])$ (here $\widehat u=\{u\}$ kills the $
 (zero if $u_h$ is continuous) yields $|||u_0|||\lesssim|||u_h|||$ and $\sum_{i\ge1}|||u_i|||^2\lesssim\eta h^{-1}\|[\![u_h]\!]\|^2\lesssim|||u_h|||^2$.
 - **Conclusion:** the additive preconditioner is **robust**: $\kappa(BA)\lesssim1$ independent of $h$ and the penalty $\eta$, reducing DG preconditioning to the preconditioning of the $H^1$-conforming problem.
 ## 8. H(div) and H(curl) (L8)
+> **Takeaway (L8):** Some PDEs (Darcy, Maxwell) only need the divergence or curl of the unknown, so $[H^1]^d$ is needlessly restrictive. $H(\mathrm{div})$ needs only **normal** continuity across faces, $H(\mathrm{curl})$ only **tangential** continuity, and $H^1$ needs full continuity.
+
 ### Motivation
 - **Darcy flow** (velocity $u$, pressure $p$):
   $$u+\nabla p=f,\qquad\nabla\cdot u=g$$
@@ -370,6 +394,8 @@ $$H(\mathrm{div},\Omega)=\{v\in[L^2]^d:\nabla\cdot v\in L^2\},\qquad H(\mathrm{c
 - A vector field decomposes on a face as $\phi=\phi_\parallel+(\phi\cdot n)n$, and $\phi\times n=\phi_\parallel\times n$, so $[\![u\times n]\!]=0$ is tangential continuity.
 - FE consequence: membership in $H^1$, $H(\mathrm{div})$, $H(\mathrm{curl})$ is decided by interface continuity of full / normal / tangential components.
 ## 9. Raviart-Thomas elements and Darcy (L9)
+> **Takeaway (L9):** $RT_0$ builds in normal continuity by making the DOFs the **edge/face fluxes** $\int_e v\cdot n$. Its key property is $\nabla\cdot I_hv=\Pi_0(\nabla\cdot v)$ (commuting diagram), which gives discrete inf-sup stability for $RT_0$-$P_0$ on Darcy, where standard $P_1$-$P_0$ fails.
+
 ### Why not standard elements
 - $H^1$ spaces are subspaces of $H(\mathrm{div})$ but are often **not suitable**. For Darcy, $V_h$ = continuous piecewise linears (vector) and $P_h$ = piecewise constants is **not inf-sup stable**: $\dim V_h=2n_V<n_T=\dim P_h$ (angle counting), so $B$ ($n_T\times2n_V$) has dependent rows and some $q_h\ne0$ has $b(v_h,q_h)=0$ for all $v_h$. Cause: $V_h$ is too small; the flux should be in $H(\mathrm{div})$ not $H^1$. We need something "between" $H^1$ (full continuity) and DG (no continuity).
 ### Lowest-order Raviart-Thomas on a triangle
@@ -397,6 +423,8 @@ Extends to $[H^1]^d$ (trace theorem). $I_h$ is a projection onto $V_h$.
 - **Lemma 1:** $\|I_hv\|_{L^2}\lesssim\|v\|_{L^2}+h\|\nabla v\|_{L^2}$ and $\|I_hv\|_{H(\mathrm{div})}\lesssim\|v\|_{H^1}$ (Piola + trace theorem + shape regularity $\|J\|\sim h$, $\|J^{-1}\|\sim h^{-1}$).
 - Approximation: $\|v-I_hv\|_{L^2}\lesssim h\|v\|_{H^1}$ (reduces to approximation by $P_0$ since $I_h$ is a projection and $P_0\subset RT_0$; for $RT_k$ reduces to $P_k$).
 ### Application to Darcy's equations (saddle point problem)
+> **Takeaway:** Darcy is a saddle point problem, so well-posedness needs Brezzi's conditions, with inf-sup the hard one. The RT interpolant is a Fortin operator that transfers the continuous inf-sup to the discrete space, and the velocity error is independent of the pressure.
+
 - With $V=H(\mathrm{div},\Omega)$, $P=L^2(\Omega)$:
   $$a(u,v)=(u,v),\quad b(v,p)=-(\nabla\cdot v,p),\quad F(v)=(f,v),\quad G(q)=(-g,q)$$
   $$a(u,v)+b(v,p)=F(v),\qquad b(u,q)=G(q)$$
@@ -421,7 +449,11 @@ The velocity $L^2$ error depends only on the interpolation error of $u$ (**indep
 - (d) Unisolvence: $\sum_ic_i=\int_{\partial\kappa}v\cdot n=3|\kappa|b$, so $c_i=0\Rightarrow b=0$; then $|f_i|\,a\cdot n_i=0$ for the four face normals, which span $\mathbb R^3$, so $a=0$. Injective map between 4-dim spaces is bijective.
 - (e) Global space: $V_h=\{v\in H(\mathrm{div}):v|_\kappa\in RT_0\}$ with one global DOF (flux through the face, with a fixed global orientation of the normal) per mesh face; global basis function supported on the two tetrahedra sharing the face; transfer to physical elements via the Piola transform $v=\frac1{\det J}J\hat v\circ T^{-1}$. Normal continuity then holds automatically, since the normal component on a shared face is determined by the single shared DOF.
 ## 10. Nedelec elements and the de Rham complex (L10)
+> **Takeaway (L10):** Nedelec elements are the $H(\mathrm{curl})$ analogue of RT: DOFs are **tangential** edge integrals $\int_e v\cdot t$. $H^1$, Nedelec, RT, and $L^2$ spaces fit into one discrete de Rham complex ($\nabla$, $\nabla\times$, $\nabla\cdot$) whose interpolants commute with the differential operators.
+
 ### 2D Nedelec ($H(\mathrm{curl})$) elements
+> **Takeaway:** In 2D, Nedelec is just RT rotated by $90^\circ$, so everything (unisolvence, interpolant, commuting property) carries over with normal replaced by tangent.
+
 - In 2D, $\nabla\times u=\nabla\cdot(u^\perp)$ with $u^\perp=(-u_2,u_1)$. So 2D $H(\mathrm{curl})$ elements are $90^\circ$ **rotations** of $H(\mathrm{div})$ elements (2D only!).
   $$N_0(\kappa)=\{u=a+b\,x^\perp:a\in\mathbb R^2,b\in\mathbb R\},\quad x^\perp=(-y,x)$$
 - $\nabla u=\begin{pmatrix}0&-b\\b&0\end{pmatrix}$ (skew), $\nabla\times u=2b$, so curl-free implies constant.
@@ -442,6 +474,8 @@ with vertical maps $I_{H^1},I_N,\Pi_0$.
 - Left square proof: $\int_e\nabla v_h\cdot t=[v_h]_{\partial e}=[v]_{\partial e}=\int_e\nabla v\cdot t$ (fundamental theorem of calculus), so DOFs of $\nabla I_{H^1}v$ and $I_N\nabla v$ agree; unisolvence gives $\nabla I_{H^1}v=I_N\nabla v$.
 - Same argument gives the RT diagram: $V_{H^1}\xrightarrow{\nabla^\perp}V_{RT}\xrightarrow{\nabla\cdot}V_{L^2}$.
 ### 3D Nedelec
+> **Takeaway:** In 3D the rotation trick fails: RT lives on faces, Nedelec on edges. The pattern still holds (constant + skew part, one DOF per edge), and the full diagram $H^1\to N\to RT\to L^2$ commutes.
+
 - In 3D $RT$ DOFs live on **faces**, Nedelec DOFs on **edges** (spaces are genuinely different, not rotations).
   $$N_0=\{v=a+q:\ q\in S\},\qquad S=\mathrm{span}\Big\{\begin{pmatrix}0\\-z\\y\end{pmatrix},\begin{pmatrix}z\\0\\-x\end{pmatrix},\begin{pmatrix}-y\\x\\0\end{pmatrix}\Big\}=\{b\times x:b\in\mathbb R^3\}$$
 - $\dim N_0=6$ (3 for $a$, 3 for $q$), one DOF per edge (6 edges of a tetrahedron): $c_e(v)=\int_ev\cdot t\,ds$. Unisolvence is harder than in 2D but holds.
